@@ -274,19 +274,25 @@
 
     function renderTable() {
       tbody.innerHTML = '';
+      if (!filtered || filtered.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="7" style="text-align:center;color:#b71c1c;font-size:1.1rem;">No agencies found.</td>`;
+        tbody.appendChild(tr);
+        return;
+      }
       const start = (page - 1) * PAGE_SIZE;
       const end = Math.min(start + PAGE_SIZE, filtered.length);
       for (let i = start; i < end; i++) {
-        const a = filtered[i];
+        const a = filtered[i] || {};
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${a.providerName || ''}</td>
-          <td>${a.city || ''}</td>
-          <td>${a.state || ''}</td>
-          <td>${a.zip || ''}</td>
-          <td>${a.phone || ''}</td>
-          <td>${formatDate(a.certificationDate)}</td>
-          <td>${a.ownershipType || ''}</td>
+          <td>${a.providerName ?? ''}</td>
+          <td>${a.city ?? ''}</td>
+          <td>${a.state ?? ''}</td>
+          <td>${a.zip ?? ''}</td>
+          <td>${a.phone ?? ''}</td>
+          <td>${formatDate(a.certificationDate ?? '')}</td>
+          <td>${a.ownershipType ?? ''}</td>
         `;
         tbody.appendChild(tr);
       }

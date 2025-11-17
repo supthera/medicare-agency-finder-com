@@ -6,6 +6,25 @@
   <title>Medicare Home Health Agency Finder</title>
   <!-- Force redeploy: single table layout only -->
   <style>
+    th[data-key="providerName"], td:nth-child(1) {
+      width: 45%;
+      min-width: 320px;
+      max-width: 900px;
+      word-break: normal;
+      white-space: nowrap;
+    }
+    th[data-key="address"], td:nth-child(2) {
+      width: 20%;
+      min-width: 180px;
+      max-width: 400px;
+      word-break: break-word;
+    }
+    th[data-key="city"], td:nth-child(3) {
+      width: 10%;
+      min-width: 100px;
+      max-width: 200px;
+      word-break: break-word;
+    }
     /* ...existing code... */
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
@@ -214,7 +233,8 @@
         <thead>
           <tr>
             <th data-key="providerName">Provider Name</th>
-            <th data-key="city">City</th>
+            <th data-key="address">Address</th>
+            <th data-key="city">City/Town</th>
             <th data-key="state">State</th>
             <th data-key="zip">ZIP</th>
             <th data-key="phone">Phone</th>
@@ -269,7 +289,8 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${a.providerName ?? ''}</td>
-          <td>${a.city ?? ''}</td>
+          <td>${a.address ?? ''}</td>
+          <td>${a.city ?? a.town ?? ''}</td>
           <td>${a.state ?? ''}</td>
           <td>${a.zip ?? ''}</td>
           <td>${a.phone ?? ''}</td>

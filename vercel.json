@@ -2,9 +2,11 @@
   "version": 2,
   "builds": [{ "src": "server.js", "use": "@vercel/node" }],
   "routes": [
-     { "src": "/search.html", "dest": "public/search.html" },
-     { "src": "/(.*\\.html|.*\\.css|.*\\.js|.*\\.png|.*\\.svg|.*\\.json|.*\\.mp3|.*\\.wav)", "dest": "/public/$1" },
-    { "src": "/(.*)", "dest": "server.js" }
+    { "src": "/data/(.*)", "dest": "/public/data/$1" },
+    { "src": "/search.html", "dest": "/public/search.html" },
+    { "src": "/(.*\\.(html|css|js|png|jpg|ico))", "dest": "/public/$1" },
+    { "src": "/api/(.*)", "dest": "/server.js" },
+    { "src": "/(.*)", "dest": "/server.js" }
   ],
   "functions": {
     "server.js": { "maxDuration": 60 }

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medicare Home Health Agency Finder</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f7fbff;
+      color: #1a237e;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: 2rem auto;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      color: #1565c0;
+      margin-bottom: 1.5rem;
+    }
+    .search-box {
+      width: 100%;
+      padding: 1rem;
+      font-size: 1.2rem;
+      border: 1px solid #90caf9;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+      box-sizing: border-box;
+    }
+    .table-wrap {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+    }
+    th, td {
+      padding: 0.75rem 0.5rem;
+      text-align: left;
+      border-bottom: 1px solid #e3eaf2;
+    }
+    th {
+      background: #e3f2fd;
+      color: #1565c0;
+      cursor: pointer;
+      user-select: none;
+    }
+    th.sort-asc::after {
+      content: " \25B2";
+    }
+    th.sort-desc::after {
+      content: " \25BC";
+    }
+    tr:hover {
+      background: #f0f7ff;
+    }
+    .count {
+      font-size: 1rem;
+      color: #1976d2;
+      margin-bottom: 1rem;
+    }
+    .pagination {
+      text-align: center;
+      margin: 1rem 0;
+    }
+    .pagination button {
+      background: #1976d2;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 0.5rem 1rem;
+      margin: 0 0.25rem;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .pagination button:disabled {
+      background: #90caf9;
+      cursor: not-allowed;
+    }
+    .footer {
+      text-align: center;
+      color: #607d8b;
+      font-size: 0.95rem;
+      margin-top: 2rem;
+    }
+    @media (max-width: 600px) {
+      .container {
+        padding: 1rem;
+      }
+      th, td {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.95rem;
+      }
+      h1 {
+        font-size: 1.3rem;
+      }
+    }
+    .error {
+      color: #c62828;
+      background: #fff3e0;
+      border: 1px solid #ffccbc;
+      border-radius: 6px;
+      padding: 1rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .sync-btn {
+      background: #1565c0;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 0.75rem 1.5rem;
+      font-size: 1.1rem;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    .sync-btn:active {
+      background: #1976d2;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Medicare Home Health Agency Finder</h1>
+    <input type="text" id="search" class="search-box" placeholder="Search by agency name, city, state, or ZIP..." autocomplete="off">
+    <div id="error" class="error" style="display:none;"></div>
+    <div class="count" id="count"></div>
+    <div class="table-wrap">
+      <table id="agency-table">
+        <thead>
+          <tr>
+            <th data-key="providerName">Provider Name</th>
+            <th data-key="city">City</th>
+            <th data-key="state">State</th>
+            <th data-key="zip">ZIP</th>
+            <th data-key="phone">Phone</th>
+            <th data-key="certificationDate">Certification Date</th>
+            <th data-key="ownershipType">Ownership Type</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+    <div class="footer" id="footer"></div>
+  </div>
+  <script>
+    const API_URL = '/data/home-health-latest.json';
+    const SYNC_URL = '/api/sync?secret=supersecret123changeitlater';
+    const table = document.getElementById('agency-table');
+    const tbody = table.querySelector('tbody');
+    const search = document.getElementById('search');
+    const count = document.getElementById('count');
+    const footer = document.getElementById('footer');
+    const errorDiv = document.getElementById('error');
+    const pagination = document.getElementById('pagination');
+    let agencies = [];
+    let filtered = [];
+    let sortKey = '';
+    let sortDir = 'asc';
+    let page = 1;
+    const PAGE_SIZE = 100;
+    let lastUpdate = '';
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (isNaN(d)) return dateStr;
+      return d.toLocaleDateString();
+    }
+
+    function renderTable() {
+      tbody.innerHTML = '';
+      const start = (page - 1) * PAGE_SIZE;
+      const end = Math.min(start + PAGE_SIZE, filtered.length);
+      for (let i = start; i < end; i++) {
+        const a = filtered[i];
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${a.providerName || ''}</td>
+          <td>${a.city || ''}</td>
+          <td>${a.state || ''}</td>
+          <td>${a.zip || ''}</td>
+          <td>${a.phone || ''}</td>
+          <td>${formatDate(a.certificationDate)}</td>
+          <td>${a.ownershipType || ''}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+      count.textContent = `${filtered.length} agencies found`;
+      renderPagination();
+    }
+
+    function renderPagination() {
+      pagination.innerHTML = '';
+      if (filtered.length <= PAGE_SIZE) return;
+      const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.disabled = i === page;
+        btn.onclick = () => {
+          page = i;
+          renderTable();
+        };
+        pagination.appendChild(btn);
+      }
+    }
+
+    function sortBy(key) {
+      if (sortKey === key) {
+        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortKey = key;
+        sortDir = 'asc';
+      }
+      filtered.sort((a, b) => {
+        let v1 = a[key] || '';
+        let v2 = b[key] || '';
+        if (typeof v1 === 'string') v1 = v1.toLowerCase();
+        if (typeof v2 === 'string') v2 = v2.toLowerCase();
+        if (v1 < v2) return sortDir === 'asc' ? -1 : 1;
+        if (v1 > v2) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+      });
+      updateSortIndicators();
+      renderTable();
+    }
+
+    function updateSortIndicators() {
+      table.querySelectorAll('th').forEach(th => {
+        th.classList.remove('sort-asc', 'sort-desc');
+        if (th.dataset.key === sortKey) {
+          th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+        }
+      });
+    }
+
+    function filterAgencies() {
+      const q = search.value.trim().toLowerCase();
+      filtered = agencies.filter(a => {
+        return (
+          (a.providerName && a.providerName.toLowerCase().includes(q)) ||
+          (a.city && a.city.toLowerCase().includes(q)) ||
+          (a.state && a.state.toLowerCase().includes(q)) ||
+          (a.zip && a.zip.toLowerCase().includes(q))
+        );
+      });
+      page = 1;
+      if (sortKey) sortBy(sortKey); else renderTable();
+    }
+
+    search.addEventListener('input', filterAgencies);
+    table.querySelectorAll('th').forEach(th => {
+      th.onclick = () => sortBy(th.dataset.key);
+    });
+
+    function showError(msg, showSyncBtn = false) {
+      errorDiv.innerHTML = msg;
+      errorDiv.style.display = 'block';
+      if (showSyncBtn) {
+        const btn = document.createElement('button');
+        btn.textContent = 'Click to download latest data';
+        btn.className = 'sync-btn';
+        btn.onclick = async () => {
+          btn.disabled = true;
+          btn.textContent = 'Syncing...';
+          try {
+            await fetch(SYNC_URL);
+            location.reload();
+          } catch {
+            btn.textContent = 'Failed. Try again.';
+            btn.disabled = false;
+          }
+        };
+        errorDiv.appendChild(document.createElement('br'));
+        errorDiv.appendChild(btn);
+      }
+    }
+
+    async function loadData() {
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error('Missing data');
+        const json = await res.json();
+        if (!Array.isArray(json) || json.length === 0) {
+          showError('No data found. Please sync the latest data.', true);
+          return;
+        }
+        agencies = json;
+        filtered = agencies.slice();
+        if (agencies[0] && agencies[0].certificationDate) {
+          lastUpdate = agencies[0].certificationDate;
+        }
+        filterAgencies();
+        errorDiv.style.display = 'none';
+        footer.innerHTML = `Data updated: <strong>${lastUpdate ? formatDate(lastUpdate) : 'Unknown'}</strong> – Source: CMS Home Health Services Q3 2025`;
+      } catch (e) {
+        showError('Unable to load data. Please sync the latest data.', true);
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

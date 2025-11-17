@@ -1,24 +1,17 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
-require('dotenv').config();
-
-
 const app = express();
 
-// Serve the entire public folder statically
-app.use(express.static('public'));
+// ← THIS LINE MUST BE FIRST — serves search.html and all static files instantly
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve static data files (redundant, but keeps legacy route)
-app.use('/data', express.static(path.join(__dirname, 'public/data')));
-// API route for sync
+// API routes (sync endpoint)
 app.use('/api', require('./routes/syncRoute'));
 
-// Home route serves search.html
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/search.html');
+// Fallback: send search.html for any other route (SPA style)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'search.html'));
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+module.exports = app;

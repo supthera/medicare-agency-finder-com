@@ -3,13 +3,18 @@ const express = require('express');
 const path = require('path');
 const app = express();
 
-// ← THIS LINE MUST BE FIRST — serves search.html and all static files instantly
+// Serve static files from public (frontend + data)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// API routes (sync endpoint)
+// API sync route (your existing logic)
 app.use('/api', require('./routes/syncRoute'));
 
-// Fallback: send search.html for any other route (SPA style)
+// Home page: Serve search.html (the beautiful finder)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'search.html'));
+});
+
+// Fallback for any other routes: Serve search.html (SPA style)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'search.html'));
 });

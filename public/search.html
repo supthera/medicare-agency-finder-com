@@ -228,46 +228,25 @@
     <input type="text" id="search" class="search-box" placeholder="Search by agency name, city, state, or ZIP..." autocomplete="off">
     <div id="error" class="error" style="display:none;"></div>
     <div class="count" id="count"></div>
-    <div id="state-sections"></div>
+    <div class="table-wrap">
+      <table id="agency-table">
+        <thead>
+          <tr>
+            <th data-key="providerName">Provider Name</th>
+            <th data-key="city">City</th>
+            <th data-key="state">State</th>
+            <th data-key="zip">ZIP</th>
+            <th data-key="phone">Phone</th>
+            <th data-key="certificationDate">Certification Date</th>
+            <th data-key="ownershipType">Ownership Type</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
     <div class="footer" id="footer"></div>
   </div>
-    .state-section {
-      margin-bottom: 2.2rem;
-      border-radius: 8px;
-      background: #f7fbff;
-      box-shadow: 0 2px 8px rgba(25, 118, 210, 0.07);
-      overflow: hidden;
-      border: 1px solid #e3eaf2;
-    }
-    .state-header {
-      background: #e3f2fd;
-      color: #1565c0;
-      font-size: 1.15rem;
-      font-weight: 600;
-      padding: 1rem 1.5rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid #e3eaf2;
-      user-select: none;
-      transition: background 0.18s;
-    }
-    .state-header:hover {
-      background: #bbdefb;
-    }
-    .state-arrow {
-      font-size: 1.2rem;
-      margin-left: 0.5rem;
-      transition: transform 0.2s;
-    }
-    .state-arrow.collapsed {
-      transform: rotate(-90deg);
-    }
-    .state-table-wrap {
-      padding: 0.5rem 1.5rem 1.2rem 1.5rem;
-      animation: fadeIn 0.4s;
-    }
+    /* Removed state grouping styles. Only single table layout. */
   <script>
   const API_URL = '/agencies.json';
     const SYNC_URL = '/api/sync?secret=supersecret123changeitlater';

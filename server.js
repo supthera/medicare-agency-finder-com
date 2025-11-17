@@ -2,16 +2,20 @@ const express = require('express');
 const path = require('path');
 require('dotenv').config();
 
+
 const app = express();
 
-// Serve static data files
+// Serve the entire public folder statically
+app.use(express.static('public'));
+
+// Serve static data files (redundant, but keeps legacy route)
 app.use('/data', express.static(path.join(__dirname, 'public/data')));
 // API route for sync
 app.use('/api', require('./routes/syncRoute'));
 
-// Root route
+// Home route serves search.html
 app.get('/', (req, res) => {
-  res.send('Medicare Agency Finder API is running.');
+  res.sendFile(__dirname + '/public/search.html');
 });
 
 const PORT = process.env.PORT || 3001;

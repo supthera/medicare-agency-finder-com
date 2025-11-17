@@ -1,8 +1,10 @@
 {
   "version": 2,
   "builds": [{ "src": "server.js", "use": "@vercel/node" }],
-  "routes": [{ "src": "/(.*)", "dest": "server.js" }]
-  ,
+  "routes": [
+    { "src": "/(.*\\.html|.*\\.css|.*\\.js|.*\\.png|.*\\.svg|.*\\.json|.*\\.mp3|.*\\.wav)", "dest": "/public/$1" },
+    { "src": "/(.*)", "dest": "server.js" }
+  ],
   "functions": {
     "server.js": { "maxDuration": 60 }
   }
